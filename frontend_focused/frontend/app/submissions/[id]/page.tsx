@@ -4,8 +4,16 @@ import { SubmissionDetailView } from '@/components/submissions/SubmissionDetailV
 
 function DetailFallback() {
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '48px 24px' }}>
-      <p style={{ color: '#5f6b7a' }}>Loading submission…</p>
+    <div
+      style={{
+        maxWidth: 1200,
+        margin: '0 auto',
+        padding: '32px 24px',
+        color: '#64748b',
+        fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+      }}
+    >
+      Loading submission…
     </div>
   );
 }

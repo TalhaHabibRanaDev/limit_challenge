@@ -4,8 +4,16 @@ import { SubmissionsWorkspace } from '@/components/submissions/SubmissionsWorksp
 
 function SubmissionsFallback() {
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '48px 24px' }}>
-      <p style={{ color: '#5f6b7a' }}>Loading submissions…</p>
+    <div
+      style={{
+        maxWidth: 1400,
+        margin: '0 auto',
+        padding: '32px 24px',
+        color: '#64748b',
+        fontFamily: 'var(--font-geist-sans), system-ui, sans-serif',
+      }}
+    >
+      Loading submissions…
     </div>
   );
 }

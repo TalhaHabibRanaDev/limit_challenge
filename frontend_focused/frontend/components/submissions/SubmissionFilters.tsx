@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import SearchIcon from '@mui/icons-material/Search';
 import {
   Box,
   Button,
-  Divider,
-  FormControlLabel,
+  Chip,
+  Collapse,
+  InputAdornment,
   MenuItem,
   Stack,
-  Switch,
   TextField,
   Typography,
 } from '@mui/material';
@@ -72,26 +74,92 @@ export function SubmissionFilters({
     return () => window.clearTimeout(handle);
   }, [companyInput, onChange, values.companySearch]);
 
-  const hasActiveFilters = Boolean(
-    values.status ||
-      values.brokerId ||
-      values.companySearch ||
-      values.priority ||
-      values.createdFrom ||
-      values.createdTo,
-  );
+  const brokerName =
+    values.brokerId && brokerQuery.data
+      ? brokerQuery.data.find((broker) => String(broker.id) === values.brokerId)?.name
+      : undefined;
+
+  const activeChips: { key: keyof SubmissionFilterValues; label: string }[] = [];
+  if (values.status) {
+    activeChips.push({
+      key: 'status',
+      label: `Status: ${STATUS_OPTIONS.find((o) => o.value === values.status)?.label}`,
+    });
+  }
+  if (values.brokerId) {
+    activeChips.push({
+      key: 'brokerId',
+      label: `Broker: ${brokerName || values.brokerId}`,
+    });
+  }
+  if (values.companySearch) {
+    activeChips.push({
+      key: 'companySearch',
+      label: `Company: ${values.companySearch}`,
+    });
+  }
+  if (values.priority) {
+    activeChips.push({
+      key: 'priority',
+      label: `Priority: ${PRIORITY_OPTIONS.find((o) => o.value === values.priority)?.label}`,
+    });
+  }
+  if (values.createdFrom) {
+    activeChips.push({ key: 'createdFrom', label: `From: ${values.createdFrom}` });
+  }
+  if (values.createdTo) {
+    activeChips.push({ key: 'createdTo', label: `To: ${values.createdTo}` });
+  }
+
+  const hasActiveFilters = activeChips.length > 0;
 
   return (
     <Stack spacing={2.5}>
-      <Box>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-          Filters
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Refine the pipeline. Changes apply to the URL and refresh results automatically.
-        </Typography>
+      <Box
+        display="flex"
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        justifyContent="space-between"
+        gap={2}
+        flexWrap="wrap"
+      >
+        <Box>
+          <Typography variant="subtitle1" component="h2">
+            Filters
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Narrow the pipeline. Filters sync to the URL automatically.
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Button
+            variant={showAdvanced ? 'contained' : 'outlined'}
+            size="small"
+            startIcon={<FilterListIcon />}
+            onClick={() => onToggleAdvanced(!showAdvanced)}
+            aria-expanded={showAdvanced}
+          >
+            {showAdvanced ? 'Hide more' : 'More filters'}
+          </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={onClear}
+            disabled={!hasActiveFilters}
+          >
+            Clear all
+          </Button>
+        </Stack>
       </Box>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+
+      <Box
+        display="grid"
+        gap={2}
+        gridTemplateColumns={{
+          xs: '1fr',
+          sm: '1fr 1fr',
+          md: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr)',
+        }}
+      >
         <TextField
           select
           label="Status"
@@ -100,7 +168,6 @@ export function SubmissionFilters({
             onChange({ status: event.target.value as SubmissionStatus | '' })
           }
           fullWidth
-          size="small"
         >
           {STATUS_OPTIONS.map((option) => (
             <MenuItem key={option.value || 'all-status'} value={option.value}>
@@ -115,7 +182,6 @@ export function SubmissionFilters({
           value={values.brokerId}
           onChange={(event) => onChange({ brokerId: event.target.value })}
           fullWidth
-          size="small"
           disabled={brokerQuery.isLoading}
           error={brokerQuery.isError}
           helperText={
@@ -137,35 +203,26 @@ export function SubmissionFilters({
           value={companyInput}
           onChange={(event) => setCompanyInput(event.target.value)}
           fullWidth
-          size="small"
           placeholder="Search by company name"
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" color="action" aria-hidden />
+                </InputAdornment>
+              ),
+            },
+          }}
         />
-      </Stack>
-
-      <Box display="flex" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
-        <FormControlLabel
-          control={
-            <Switch
-              checked={showAdvanced}
-              onChange={(event) => onToggleAdvanced(event.target.checked)}
-              size="small"
-            />
-          }
-          label="More filters"
-        />
-        <Button
-          variant={hasActiveFilters ? 'outlined' : 'text'}
-          onClick={onClear}
-          disabled={!hasActiveFilters}
-        >
-          Clear filters
-        </Button>
       </Box>
 
-      {showAdvanced ? (
-        <>
-          <Divider />
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+      <Collapse in={showAdvanced} unmountOnExit>
+        <Box
+          display="grid"
+          gap={2}
+          gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }}
+          sx={{ pt: 0.5 }}
+        >
           <TextField
             select
             label="Priority"
@@ -174,7 +231,6 @@ export function SubmissionFilters({
               onChange({ priority: event.target.value as SubmissionPriority | '' })
             }
             fullWidth
-            size="small"
           >
             {PRIORITY_OPTIONS.map((option) => (
               <MenuItem key={option.value || 'all-priority'} value={option.value}>
@@ -188,8 +244,7 @@ export function SubmissionFilters({
             value={values.createdFrom}
             onChange={(event) => onChange({ createdFrom: event.target.value })}
             fullWidth
-            size="small"
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
           <TextField
             label="Created to"
@@ -197,11 +252,31 @@ export function SubmissionFilters({
             value={values.createdTo}
             onChange={(event) => onChange({ createdTo: event.target.value })}
             fullWidth
-            size="small"
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
+        </Box>
+      </Collapse>
+
+      {hasActiveFilters ? (
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap alignItems="center">
+          <Typography variant="caption" fontWeight={600} color="text.secondary">
+            Active:
+          </Typography>
+          {activeChips.map((chip) => (
+            <Chip
+              key={chip.key}
+              size="small"
+              label={chip.label}
+              onDelete={() => {
+                if (chip.key === 'companySearch') {
+                  setCompanyInput('');
+                }
+                onChange({ [chip.key]: '' });
+              }}
+              sx={{ maxWidth: 280 }}
+            />
+          ))}
         </Stack>
-        </>
       ) : null}
     </Stack>
   );

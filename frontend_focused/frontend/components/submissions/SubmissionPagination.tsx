@@ -31,18 +31,25 @@ export function SubmissionPagination({
       justifyContent="space-between"
       flexWrap="wrap"
       gap={2}
-      sx={{ pt: 2, mt: 1, borderTop: 1, borderColor: 'divider' }}
+      sx={{ pt: 2.5, mt: 0.5, borderTop: 1, borderColor: 'divider' }}
     >
       <Typography variant="body2" color="text.secondary">
-        Showing {start}–{end} of {count}
+        Showing <Box component="span" fontWeight={600} color="text.primary">{start}–{end}</Box> of{' '}
+        <Box component="span" fontWeight={600} color="text.primary">{count}</Box>
       </Typography>
       <Pagination
         color="primary"
         count={totalPages}
         page={page}
         onChange={(_event, nextPage) => onPageChange(nextPage)}
-        siblingCount={1}
+        siblingCount={0}
         boundaryCount={1}
+        size="medium"
+        sx={{
+          '& .MuiPagination-ul': {
+            flexWrap: 'nowrap',
+          },
+        }}
       />
     </Box>
   );

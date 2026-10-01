@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Box, Card, CardContent, Chip, Stack, Typography } from '@mui/material';
+import { Box, Chip, Stack, Typography } from '@mui/material';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 import { AppShell } from '@/components/layout/AppShell';
@@ -13,6 +13,8 @@ import {
 import { SubmissionListStates } from '@/components/submissions/SubmissionListStates';
 import { SubmissionPagination } from '@/components/submissions/SubmissionPagination';
 import { SubmissionTable } from '@/components/submissions/SubmissionTable';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { SectionCard } from '@/components/ui/SectionCard';
 import { useSubmissionsList } from '@/lib/hooks/useSubmissions';
 import { SubmissionListFilters, SubmissionPriority, SubmissionStatus } from '@/lib/types';
 
@@ -38,14 +40,17 @@ export function SubmissionsWorkspace() {
     Boolean(parsed.priority || parsed.createdFrom || parsed.createdTo),
   );
 
-  const filterValues: SubmissionFilterValues = {
-    status: parsed.status,
-    brokerId: parsed.brokerId,
-    companySearch: parsed.companySearch,
-    priority: parsed.priority,
-    createdFrom: parsed.createdFrom,
-    createdTo: parsed.createdTo,
-  };
+  const filterValues: SubmissionFilterValues = useMemo(
+    () => ({
+      status: parsed.status,
+      brokerId: parsed.brokerId,
+      companySearch: parsed.companySearch,
+      priority: parsed.priority,
+      createdFrom: parsed.createdFrom,
+      createdTo: parsed.createdTo,
+    }),
+    [parsed],
+  );
 
   const queryFilters: SubmissionListFilters = useMemo(
     () => ({
@@ -98,24 +103,16 @@ export function SubmissionsWorkspace() {
   const handleFilterChange = useCallback(
     (next: Partial<SubmissionFilterValues>) => {
       replaceParams((params) => {
-        const merged = { ...filterValues, ...next };
-        const entries: Array<[keyof SubmissionFilterValues, string]> = [
-          ['status', merged.status],
-          ['brokerId', merged.brokerId],
-          ['companySearch', merged.companySearch],
-          ['priority', merged.priority],
-          ['createdFrom', merged.createdFrom],
-          ['createdTo', merged.createdTo],
-        ];
-
-        for (const [key, value] of entries) {
-          if (value) params.set(key, value);
-          else params.delete(key);
-        }
+        (Object.entries(next) as Array<[keyof SubmissionFilterValues, string | undefined]>).forEach(
+          ([key, value]) => {
+            if (value) params.set(key, value);
+            else params.delete(key);
+          },
+        );
         params.delete('page');
       });
     },
-    [filterValues, replaceParams],
+    [replaceParams],
   );
 
   const handleClear = useCallback(() => {
@@ -142,6 +139,10 @@ export function SubmissionsWorkspace() {
     [replaceParams],
   );
 
+  const handleRetry = useCallback(() => {
+    void submissionsQuery.refetch();
+  }, [submissionsQuery.refetch]);
+
   const isInvalidPageError =
     submissionsQuery.isError &&
     parsed.page > 1 &&
@@ -156,75 +157,75 @@ export function SubmissionsWorkspace() {
   const showEmpty =
     !submissionsQuery.isLoading && !showListError && rows.length === 0;
   const queryString = searchParams.toString();
+  const isFetchingMore = submissionsQuery.isFetching && !showSkeleton;
 
   return (
     <AppShell>
       <Stack spacing={3}>
-        <Box
-          sx={{
-            p: { xs: 2.5, md: 3 },
-            borderRadius: 3,
-            border: '1px solid',
-            borderColor: 'divider',
-            background:
-              'linear-gradient(135deg, rgba(37, 99, 235, 0.09) 0%, rgba(37, 99, 235, 0.02) 55%, #ffffff 100%)',
-          }}
-        >
-          <Typography variant="h4" component="h1" gutterBottom>
-            Submissions
-          </Typography>
-          <Typography color="text.secondary" maxWidth={640}>
-            Review broker-submitted opportunities, filter by business context, and open a
-            record for full contacts, documents, and notes.
-          </Typography>
-        </Box>
+        <PageHeader
+          title="Submissions"
+          description="Review broker-submitted opportunities, filter by business context, and open a record for contacts, documents, and notes."
+        />
 
-        <Card>
-          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-            <SubmissionFilters
-              values={filterValues}
-              onChange={handleFilterChange}
-              onClear={handleClear}
-              showAdvanced={showAdvanced}
-              onToggleAdvanced={setShowAdvanced}
-            />
-          </CardContent>
-        </Card>
+        <SectionCard>
+          <SubmissionFilters
+            values={filterValues}
+            onChange={handleFilterChange}
+            onClear={handleClear}
+            showAdvanced={showAdvanced}
+            onToggleAdvanced={setShowAdvanced}
+          />
+        </SectionCard>
 
-        <Card>
-          <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-            <Stack spacing={2.5}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1}>
-                <Typography variant="h6">Results</Typography>
-                {!showSkeleton && !showListError ? (
-                  <Chip
-                    size="small"
-                    label={`${count} submission${count === 1 ? '' : 's'}`}
-                    variant="outlined"
-                  />
+        <SectionCard>
+          <Stack spacing={2.5}>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              flexWrap="wrap"
+              gap={1}
+            >
+              <Box>
+                <Typography variant="h6" component="h2">
+                  Results
+                </Typography>
+                {isFetchingMore ? (
+                  <Typography variant="caption" color="text.secondary">
+                    Updating…
+                  </Typography>
                 ) : null}
               </Box>
-
-              <SubmissionListStates
-                isLoading={showSkeleton}
-                isError={showListError}
-                isEmpty={showEmpty}
-                onRetry={() => submissionsQuery.refetch()}
-              />
-
-              {!showSkeleton && !showListError && rows.length > 0 ? (
-                <>
-                  <SubmissionTable rows={rows} queryString={queryString} />
-                  <SubmissionPagination
-                    count={count}
-                    page={parsed.page}
-                    onPageChange={handlePageChange}
-                  />
-                </>
+              {!showSkeleton && !showListError ? (
+                <Chip
+                  size="small"
+                  label={`${count} submission${count === 1 ? '' : 's'}`}
+                  variant="outlined"
+                  sx={{ fontWeight: 600 }}
+                />
               ) : null}
-            </Stack>
-          </CardContent>
-        </Card>
+            </Box>
+
+            <SubmissionListStates
+              isLoading={showSkeleton}
+              isError={showListError}
+              isEmpty={showEmpty}
+              onRetry={handleRetry}
+              onClearFilters={handleClear}
+            />
+
+            {!showSkeleton && !showListError && rows.length > 0 ? (
+              <>
+                <SubmissionTable rows={rows} queryString={queryString} />
+                <SubmissionPagination
+                  count={count}
+                  page={parsed.page}
+                  onPageChange={handlePageChange}
+                />
+              </>
+            ) : null}
+          </Stack>
+        </SectionCard>
       </Stack>
     </AppShell>
   );
