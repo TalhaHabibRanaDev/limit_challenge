@@ -163,7 +163,7 @@ Content-Type: application/json
 - [x] Database migrations (`fleet/migrations/0001_initial.py`)
 - [x] Seed management command (`seed_fleet`)
 - [x] README (run / test / assumptions / tradeoffs)
-- [ ] Demo video (max 2 minutes) — record manually showing frontend ↔ backend
+- [x] Demo video (max 2 minutes) — [`fleet-tracker-demo.mp4`](./fleet-tracker-demo.mp4)
 
 ## Security / local-dev notes
 
