@@ -140,7 +140,7 @@ Visit `http://localhost:3000/submissions` to start building.
 ## Submission Instructions
 
 - Provide a short README update summarizing approach, tradeoffs, and how to run the solution.
-- Record and share a brief screen capture (max 2 minutes) demonstrating the frontend working end-to-end with the backend.
+- Demo video (max 2 minutes) — [`Submission_Tracker_Demo.mp4`](./Submission_Tracker_Demo.mp4)
 - Call out any stretch goals implemented.
 - Automated tests are optional, but including targeted backend or frontend tests is a strong signal.
 
